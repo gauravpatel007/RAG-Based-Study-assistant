@@ -1,0 +1,10 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({channel:'msedge', headless:true});
+const page = await browser.newPage({viewport:{width:1440,height:1000}});
+await page.route('**/*', route => route.request().url().startsWith('http://127.0.0.1:5176') || route.request().url().startsWith('data:') ? route.continue() : route.abort());
+await page.goto('http://127.0.0.1:5176', {waitUntil:'networkidle'});
+await page.screenshot({path:'../data/frammer-reference.png',fullPage:true});
+console.log(await page.locator('body').innerText());
+console.log('LINKS',await page.locator('a').evaluateAll(es=>es.map(e=>({text:e.textContent,href:e.getAttribute('href')}))));
+console.log('SECTIONS',await page.locator('main,section,header,footer').evaluateAll(es=>es.map(e=>({tag:e.tagName,id:e.id,class:e.className,text:e.textContent?.slice(0,120)}))));
+await browser.close();

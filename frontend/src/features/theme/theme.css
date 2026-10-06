@@ -1,0 +1,402 @@
+/* ===========================
+   THEME SYSTEM
+   Light/Dark mode + 8 accent colors
+   Applied via data-theme and data-accent on <html>
+=========================== */
+
+/* ── Light Theme (default) ── */
+:root,
+[data-theme="light"] {
+  --bg-canvas: #f4f4f4;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafafa;
+  --bg-input: #f7f7f7;
+  --bg-active: #f0f0f0;
+  --bg-overlay: rgba(0, 0, 0, 0.04);
+
+  --border-default: #e5e5e5;
+  --border-light: #f0f0f0;
+  --border-focus: #1a1a1a;
+
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-muted: #9b9b9b;
+  --text-inverse: #ffffff;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+
+  color-scheme: light;
+}
+
+/* ── Dark Theme ── */
+[data-theme="dark"] {
+  --bg-canvas: #171717;
+  --bg-sidebar: #1e1e1e;
+  --bg-card: #262626;
+  --bg-card-hover: #2e2e2e;
+  --bg-input: #2a2a2a;
+  --bg-active: #333333;
+  --bg-overlay: rgba(255, 255, 255, 0.04);
+
+  --border-default: #3a3a3a;
+  --border-light: #2e2e2e;
+  --border-focus: #e5e5e5;
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --text-inverse: #1a1a1a;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --accent-blue-light: rgba(0, 106, 255, 0.15);
+  --accent-green-light: rgba(0, 178, 89, 0.15);
+  --accent-red-light: rgba(226, 33, 52, 0.15);
+  --accent-orange-light: rgba(245, 166, 35, 0.15);
+  --accent-purple-light: rgba(123, 94, 167, 0.15);
+
+  color-scheme: dark;
+}
+
+
+/* ═══════════════════════════════════════
+   ACCENT COLORS
+   Each accent defines: solid, hover, soft bg, border, focus ring, text-on-accent
+   ═══════════════════════════════════════ */
+
+/* ── Black (default) ── */
+:root,
+[data-accent="black"] {
+  --accent-solid: #1a1a1a;
+  --accent-hover: #333333;
+  --accent-soft: #f0f0f0;
+  --accent-border: #1a1a1a;
+  --accent-focus-ring: rgba(26, 26, 26, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #1a1a1a;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="black"] {
+  --accent-solid: #e5e5e5;
+  --accent-hover: #d4d4d4;
+  --accent-soft: #333333;
+  --accent-border: #e5e5e5;
+  --accent-focus-ring: rgba(229, 229, 229, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #e5e5e5;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Gray ── */
+[data-accent="gray"] {
+  --accent-solid: #6b7280;
+  --accent-hover: #4b5563;
+  --accent-soft: #f3f4f6;
+  --accent-border: #6b7280;
+  --accent-focus-ring: rgba(107, 114, 128, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #6b7280;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="gray"] {
+  --accent-solid: #9ca3af;
+  --accent-hover: #d1d5db;
+  --accent-soft: #374151;
+  --accent-border: #9ca3af;
+  --accent-focus-ring: rgba(156, 163, 175, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #9ca3af;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Blue ── */
+[data-accent="blue"] {
+  --accent-solid: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-border: #2563eb;
+  --accent-focus-ring: rgba(37, 99, 235, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #2563eb;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="blue"] {
+  --accent-solid: #60a5fa;
+  --accent-hover: #93bbfd;
+  --accent-soft: #1e3a5f;
+  --accent-border: #60a5fa;
+  --accent-focus-ring: rgba(96, 165, 250, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #60a5fa;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Green ── */
+[data-accent="green"] {
+  --accent-solid: #16a34a;
+  --accent-hover: #15803d;
+  --accent-soft: #f0fdf4;
+  --accent-border: #16a34a;
+  --accent-focus-ring: rgba(22, 163, 74, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #16a34a;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="green"] {
+  --accent-solid: #4ade80;
+  --accent-hover: #86efac;
+  --accent-soft: #14532d;
+  --accent-border: #4ade80;
+  --accent-focus-ring: rgba(74, 222, 128, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #4ade80;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Yellow ── (dark foreground text) */
+[data-accent="yellow"] {
+  --accent-solid: #ca8a04;
+  --accent-hover: #a16207;
+  --accent-soft: #fefce8;
+  --accent-border: #ca8a04;
+  --accent-focus-ring: rgba(202, 138, 4, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #ca8a04;
+  --btn-primary-text: #1a1a1a;
+}
+[data-theme="dark"][data-accent="yellow"] {
+  --accent-solid: #facc15;
+  --accent-hover: #fde047;
+  --accent-soft: #422006;
+  --accent-border: #facc15;
+  --accent-focus-ring: rgba(250, 204, 21, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #facc15;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Pink ── */
+[data-accent="pink"] {
+  --accent-solid: #db2777;
+  --accent-hover: #be185d;
+  --accent-soft: #fdf2f8;
+  --accent-border: #db2777;
+  --accent-focus-ring: rgba(219, 39, 119, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #db2777;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="pink"] {
+  --accent-solid: #f472b6;
+  --accent-hover: #f9a8d4;
+  --accent-soft: #500724;
+  --accent-border: #f472b6;
+  --accent-focus-ring: rgba(244, 114, 182, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #f472b6;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Orange ── */
+[data-accent="orange"] {
+  --accent-solid: #ea580c;
+  --accent-hover: #c2410c;
+  --accent-soft: #fff7ed;
+  --accent-border: #ea580c;
+  --accent-focus-ring: rgba(234, 88, 12, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #ea580c;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="orange"] {
+  --accent-solid: #fb923c;
+  --accent-hover: #fdba74;
+  --accent-soft: #431407;
+  --accent-border: #fb923c;
+  --accent-focus-ring: rgba(251, 146, 60, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #fb923c;
+  --btn-primary-text: #1a1a1a;
+}
+
+/* ── Purple ── */
+[data-accent="purple"] {
+  --accent-solid: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: #f5f3ff;
+  --accent-border: #7c3aed;
+  --accent-focus-ring: rgba(124, 58, 237, 0.3);
+  --accent-text-on: #ffffff;
+
+  --btn-primary-bg: #7c3aed;
+  --btn-primary-text: #ffffff;
+}
+[data-theme="dark"][data-accent="purple"] {
+  --accent-solid: #a78bfa;
+  --accent-hover: #c4b5fd;
+  --accent-soft: #2e1065;
+  --accent-border: #a78bfa;
+  --accent-focus-ring: rgba(167, 139, 250, 0.3);
+  --accent-text-on: #1a1a1a;
+
+  --btn-primary-bg: #a78bfa;
+  --btn-primary-text: #1a1a1a;
+}
+
+
+/* ═══════════════════════════════════════
+   ACCENT APPLICATION — interactive elements
+   ═══════════════════════════════════════ */
+
+/* Primary buttons */
+.btn-primary {
+  background: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
+  border-color: var(--btn-primary-bg) !important;
+}
+.btn-primary:hover {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+/* Secondary buttons use theme tokens (already in index.css) */
+.btn-secondary {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+.btn-secondary:hover {
+  background: var(--bg-card-hover) !important;
+}
+
+/* Active navigation indicator */
+.nav-item.active {
+  background: var(--accent-soft) !important;
+  color: var(--accent-solid) !important;
+}
+
+/* Links */
+a:not([class]) {
+  color: var(--accent-solid);
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent-solid);
+  outline-offset: 2px;
+}
+
+
+/* ═══════════════════════════════════════
+   DARK THEME OVERRIDES
+   Ensure all surfaces, text, and controls adapt
+   ═══════════════════════════════════════ */
+
+[data-theme="dark"] body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar {
+  background: var(--bg-sidebar);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .sidebar-brand {
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .nav-item {
+  color: var(--text-secondary);
+}
+[data-theme="dark"] .nav-item:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar-user {
+  background: var(--bg-active);
+}
+
+[data-theme="dark"] .sidebar-footer {
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] .main-content {
+  background: var(--bg-canvas);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Cards and containers */
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background: white"] {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Table headers */
+[data-theme="dark"] thead tr {
+  background: var(--bg-active) !important;
+}
+[data-theme="dark"] th {
+  color: var(--text-muted) !important;
+}
+[data-theme="dark"] td {
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
+}
+[data-theme="dark"] tr {
+  border-color: var(--border-default) !important;
+}
+
+/* Keep semantic colors independent of accent */
+.status-success { color: #10b981 !important; }
+.status-error { color: #ef4444 !important; }
+.status-warning { color: #f59e0b !important; }
+
+/* Custom UI Overrides */
+[data-theme="dark"] .new-chat-btn {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid var(--border-default);
+}
+
+[data-theme="dark"] .new-chat-btn:hover {
+  background: #111111 !important;
+}
+
+[data-theme="dark"] .select-option-box {
+  background: var(--bg-input);
+}
+

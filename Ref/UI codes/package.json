@@ -1,0 +1,41 @@
+{
+  "name": "odoo-pos-cafe-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test:e2e": "playwright test",
+    "db:seed": "node migrate_and_seed.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^17.4.0",
+    "jose": "^5.10.0",
+    "lucide-react": "^0.390.0",
+    "next": "^16.2.2",
+    "pg": "^8.20.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "recharts": "^2.12.7",
+    "stripe": "^22.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.42.1",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^8",
+    "eslint-config-next": "^16.2.2",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5"
+  }
+}
