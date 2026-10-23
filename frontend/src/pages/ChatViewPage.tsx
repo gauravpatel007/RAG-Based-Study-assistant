@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, Link, Outlet, useLocation } from 'react-router-dom';
-import { Upload, FileText, Lightbulb, HelpCircle, Loader2, Bot, User, Square, Plus, Mic, ArrowUp, ArrowDown, X, ThumbsUp, ThumbsDown, Copy, Check, Layers, Network, Edit2, Trash2, Clock, StickyNote } from 'lucide-react';
+import { Upload, FileText, Lightbulb, HelpCircle, Loader2, Bot, User, Square, Plus, Mic, ArrowUp, ArrowDown, X, ThumbsUp, ThumbsDown, Copy, Check, Layers, Network, Edit2, Trash2, Clock, StickyNote, MonitorPlay } from 'lucide-react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -112,13 +112,14 @@ export default function ChatViewPage() {
   const isCompare = location.pathname.endsWith('/compare');
   const isFlashcards = location.pathname.endsWith('/flashcards');
   const isNotes = location.pathname.endsWith('/notes');
-  const isChat = !isTopics && !isQuiz && !isCompare && !isFlashcards && !isMindMaps && !isNotes;
+  const isPresentations = location.pathname.endsWith('/presentations');
+  const isChat = !isTopics && !isQuiz && !isCompare && !isFlashcards && !isMindMaps && !isNotes && !isPresentations;
 
   const handleScroll = () => {
     const el = panelRef.current;
     if (!el) return;
     const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const isScrolledUp = distanceFromBottom > 150;
+    const isScrolledUp = distanceFromBottom > 30;
     userScrolledUpRef.current = isScrolledUp;
     setShowScrollDown(isScrolledUp);
   };
@@ -148,13 +149,25 @@ export default function ChatViewPage() {
   useEffect(() => {
     activeChat.current = chatId;
     userScrolledUpRef.current = false;
-    setMessages([]); setDocuments([]); setSelected([]); setActiveJob(null); setProgress({}); setSource(null); setError(''); setInput(''); setLoading(true);
+    setMessages([]); setDocuments([]); setSelected([]); setActiveJob(null); setProgress({}); setSource(null); setError(''); 
+    setInput(localStorage.getItem(`chat_draft_${chatId}`) || ''); 
+    setLoading(true);
     void reload();
-  }, [reload]);
+  }, [reload, chatId]);
+
+  useEffect(() => {
+    if (chatId) {
+      if (input.trim()) {
+        localStorage.setItem(`chat_draft_${chatId}`, input);
+      } else {
+        localStorage.removeItem(`chat_draft_${chatId}`);
+      }
+    }
+  }, [input, chatId]);
   useEffect(() => { const q = new URLSearchParams(location.search).get('q'); if (q) setInput(q); }, [location.search]);
   useEffect(() => {
     if (!userScrolledUpRef.current) {
-      end.current?.scrollIntoView({ behavior: 'smooth' });
+      end.current?.scrollIntoView({ behavior: 'auto' });
     }
   }, [messages]);
 
@@ -208,6 +221,7 @@ export default function ChatViewPage() {
       const job = await api.sendMessage(chatId, question, selected.length ? selected : undefined);
       if (activeChat.current !== chatId) return;
       setInput('');
+      localStorage.removeItem(`chat_draft_${chatId}`);
       userScrolledUpRef.current = false;
       await reload();
       setActiveJob(job.job_id);
@@ -281,6 +295,7 @@ export default function ChatViewPage() {
       <Link className={`chat-tab${isFlashcards ? ' active' : ''}`} id="tab-flashcards" to={`/app/chats/${chatId}/flashcards`}><Layers size={14} /> Flashcards</Link>
       <Link className={`chat-tab${isMindMaps ? ' active' : ''}`} id="tab-mind-maps" to={`/app/chats/${chatId}/mind-maps`}><Network size={14} /> Mind Maps</Link>
       <Link className={`chat-tab${isNotes ? ' active' : ''}`} id="tab-notes" to={`/app/chats/${chatId}/notes`}><StickyNote size={14} /> Notes</Link>
+      <Link className={`chat-tab${isPresentations ? ' active' : ''}`} id="tab-presentations" to={`/app/chats/${chatId}/presentations`}><MonitorPlay size={14} /> PPT Maker</Link>
     </div>
     {error && (
       <div role="alert" className="inline-error inline-error-banner">

@@ -48,17 +48,17 @@ class Settings(BaseSettings):
     # ── Ollama ──
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     LLM_MODEL: str = "qwen3:4b"
-    LLM_CONTEXT_TOKENS: int = 8192
-    LLM_MAX_OUTPUT_TOKENS: int = 4096
+    LLM_CONTEXT_TOKENS: int = 4096
+    LLM_MAX_OUTPUT_TOKENS: int = 1024
     LLM_TEMPERATURE: float = 0.2
     
     # ── Hybrid RAG / Reranker ──
     RERANKER_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     RERANKER_ENABLED: bool = True          # kill-switch: fall back to semantic-only
     BM25_ENABLED: bool = True              # kill-switch: disable BM25 leg
-    SEMANTIC_TOP_K: int = 20              # ChromaDB candidates per query
-    BM25_TOP_K: int = 20                   # BM25 candidates per query
-    RERANKER_TOP_N: int = 8               # final chunks after reranking
+    SEMANTIC_TOP_K: int = 12              # ChromaDB candidates per query
+    BM25_TOP_K: int = 12                   # BM25 candidates per query
+    RERANKER_TOP_N: int = 5               # final chunks after reranking
     BM25_MAX_CHUNKS: int = 5000           # degrade BM25 if corpus exceeds this
 
     # ── Embeddings ──

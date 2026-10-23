@@ -1,5 +1,5 @@
-"""Small, bounded quiz requests optimized for a CPU-only local model."""
 import json
+import random
 
 def prepare_quiz_batch(rows, offset, count, difficulty, context_tokens, topic_focus=None):
     limit = count
@@ -97,14 +97,27 @@ def parse_quiz(content, source_count, count):
                 continue
                 
             q = str(value.get("q", "Question")).strip()[:300] or "Unknown Question"
-            a = str(value.get("a", "Option A")).strip()[:150] or "Option A"
-            b = str(value.get("b", "Option B")).strip()[:150] or "Option B"
-            c = str(value.get("c", "Option C")).strip()[:150] or "Option C"
-            d = str(value.get("d", "Option D")).strip()[:150] or "Option D"
+            opt_texts = {
+                "a": str(value.get("a", "Option A")).strip()[:150] or "Option A",
+                "b": str(value.get("b", "Option B")).strip()[:150] or "Option B",
+                "c": str(value.get("c", "Option C")).strip()[:150] or "Option C",
+                "d": str(value.get("d", "Option D")).strip()[:150] or "Option D",
+            }
             exp = str(value.get("exp", "")).strip()[:200]
             ans = str(value.get("ans", "a")).strip().lower()
             if ans not in ["a", "b", "c", "d"]:
                 ans = "a"
+                
+            # Randomize options reliably post-generation
+            correct_text = opt_texts[ans]
+            options_list = list(opt_texts.values())
+            random.shuffle(options_list)
+            
+            a, b, c, d = options_list
+            if a == correct_text: ans = "a"
+            elif b == correct_text: ans = "b"
+            elif c == correct_text: ans = "c"
+            else: ans = "d"
                 
             sources = value.get("s", [])
             if not isinstance(sources, list):

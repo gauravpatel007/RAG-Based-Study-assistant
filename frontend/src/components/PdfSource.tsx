@@ -4,7 +4,8 @@ import 'pdfjs-dist/web/pdf_viewer.css';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import {
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut,
-  ExternalLink, X, Loader2, Maximize2, Minimize2
+  ExternalLink, X, Loader2, Maximize2, Minimize2,
+  Quote, ChevronDown, ChevronUp, Copy, Check
 } from 'lucide-react';
 import { formatDocName } from '@/lib/formatters';
 import { SelectionToolbar } from './SelectionToolbar';
@@ -53,6 +54,15 @@ export default function PdfSource({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [showExcerpt, setShowExcerpt] = useState<boolean>(true);
+  const [isExcerptExpanded, setIsExcerptExpanded] = useState<boolean>(false);
+  const [copiedExcerpt, setCopiedExcerpt] = useState<boolean>(false);
+
+  // Reset excerpt visibility and expansion whenever citation source changes
+  useEffect(() => {
+    setShowExcerpt(true);
+    setIsExcerptExpanded(false);
+  }, [source.document_id, source.page_number, source.excerpt]);
 
   // Sync native fullscreen state
   useEffect(() => {
@@ -282,7 +292,7 @@ export default function PdfSource({
     setZoom(1.1);
   };
 
-  const handleAction = async (prompt: string | null, action: 'send' | 'compose' | 'note' | 'quote') => {
+  const handleAction = async (prompt: string | null, action: 'send' | 'compose' | 'note' | 'quote', actionId?: string, rawText?: string) => {
     if (!chatId) return;
     
     if (action === 'note' && prompt) {
@@ -302,6 +312,16 @@ export default function PdfSource({
     
     clearSelection();
     close();
+
+    if (actionId === 'mcq') {
+      navigate(`/app/chats/${chatId}/quiz${rawText ? `?topic=${encodeURIComponent(rawText)}` : ''}`);
+      return;
+    }
+    if (actionId === 'flashcard') {
+      navigate(`/app/chats/${chatId}/flashcards${rawText ? `?topic=${encodeURIComponent(rawText)}` : ''}`);
+      return;
+    }
+
     if (prompt) {
       navigate(`/app/chats/${chatId}?q=${encodeURIComponent(prompt)}`);
     } else {
@@ -557,18 +577,194 @@ export default function PdfSource({
             </div>
           </div>
 
-          {source.excerpt && (
+          {source.excerpt && showExcerpt && (
             <div style={{
               background: '#f8fafc',
               border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontSize: '12.5px',
-              color: '#475569',
-              lineHeight: '1.4'
+              borderLeft: '4px solid #3b82f6',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+              marginTop: '4px',
+              position: 'relative'
             }}>
-              <strong style={{ color: '#1e293b' }}>Citation Excerpt: </strong>
-              <span style={{ fontStyle: 'italic' }}>{source.excerpt}</span>
+              {/* Header row with badge, actions and close button */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    background: '#eff6ff',
+                    color: '#2563eb',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase'
+                  }}>
+                    <Quote size={11} style={{ transform: 'rotate(180deg)' }} />
+                    Citation Excerpt
+                  </div>
+                  {source.page_number && (
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>
+                      Page {source.page_number}
+                    </span>
+                  )}
+                </div>
+
+                {/* Excerpt actions: Expand, Copy & Close */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {source.excerpt.length > 180 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsExcerptExpanded(!isExcerptExpanded)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#2563eb',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: '2px 6px',
+                        borderRadius: '4px'
+                      }}
+                      title={isExcerptExpanded ? 'Show less' : 'Show full excerpt'}
+                    >
+                      {isExcerptExpanded ? (
+                        <><span>Less</span><ChevronUp size={13} /></>
+                      ) : (
+                        <><span>Expand</span><ChevronDown size={13} /></>
+                      )}
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(source.excerpt || '');
+                      setCopiedExcerpt(true);
+                      setTimeout(() => setCopiedExcerpt(false), 1500);
+                    }}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      color: copiedExcerpt ? '#16a34a' : '#64748b',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      padding: '3px 6px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                    title="Copy excerpt to clipboard"
+                  >
+                    {copiedExcerpt ? <Check size={12} /> : <Copy size={12} />}
+                    <span>{copiedExcerpt ? 'Copied' : 'Copy'}</span>
+                  </button>
+
+                  <div style={{ width: 1, height: 12, background: '#cbd5e1', margin: '0 2px' }} />
+
+                  {/* Close button for citation excerpt */}
+                  <button
+                    type="button"
+                    onClick={() => setShowExcerpt(false)}
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#64748b',
+                      transition: 'all 0.15s ease'
+                    }}
+                    title="Close excerpt"
+                    aria-label="Close citation excerpt"
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#e2e8f0';
+                      e.currentTarget.style.color = '#0f172a';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#64748b';
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Excerpt text body */}
+              <div style={{
+                fontSize: '12px',
+                color: '#334155',
+                lineHeight: '1.55',
+                maxHeight: isExcerptExpanded ? '200px' : '54px',
+                overflowY: 'auto',
+                fontStyle: 'normal',
+                paddingRight: '4px',
+                transition: 'max-height 0.2s ease',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e1 transparent'
+              }}>
+                <span style={{ color: '#0f172a', fontWeight: 600, marginRight: 2 }}>“</span>
+                {source.excerpt}
+                <span style={{ color: '#0f172a', fontWeight: 600, marginLeft: 2 }}>”</span>
+              </div>
+            </div>
+          )}
+
+          {source.excerpt && !showExcerpt && (
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '2px' }}>
+              <button
+                type="button"
+                onClick={() => setShowExcerpt(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '3px 9px',
+                  borderRadius: '6px',
+                  background: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  color: '#475569',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = '#eff6ff';
+                  e.currentTarget.style.borderColor = '#bfdbfe';
+                  e.currentTarget.style.color = '#2563eb';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = '#f1f5f9';
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.color = '#475569';
+                }}
+                title="View citation excerpt"
+              >
+                <Quote size={11} style={{ transform: 'rotate(180deg)' }} />
+                <span>Show Citation Excerpt</span>
+              </button>
             </div>
           )}
         </div>

@@ -962,7 +962,8 @@ class ApiClient {
   // ── Notes ──
   createNote(chatId: string, body: {
     document_id?: string | null; page_number?: number | null;
-    selected_text: string; user_note?: string | null;
+    title?: string | null; selected_text?: string | null;
+    user_note?: string | null; tag?: string | null;
   }) {
     return this.request<{ id: string; created_at: string }>(
       `/chats/${chatId}/notes`, { method: 'POST', body: JSON.stringify(body) }
@@ -973,10 +974,14 @@ class ApiClient {
     return this.request<{ items: NoteItem[] }>(`/chats/${chatId}/notes`);
   }
 
-  updateNote(chatId: string, noteId: string, user_note: string) {
+  updateNote(chatId: string, noteId: string, body: {
+    title?: string | null; user_note?: string | null;
+    selected_text?: string | null; tag?: string | null;
+    is_pinned?: boolean;
+  }) {
     return this.request<{ status: string }>(
       `/chats/${chatId}/notes/${noteId}`,
-      { method: 'PATCH', body: JSON.stringify({ user_note }) }
+      { method: 'PATCH', body: JSON.stringify(body) }
     );
   }
 
@@ -984,6 +989,20 @@ class ApiClient {
     return this.request<{ status: string }>(
       `/chats/${chatId}/notes/${noteId}`, { method: 'DELETE' }
     );
+  }
+
+  noteAiAction(chatId: string, noteId: string, action: string, context?: string) {
+    return this.request<{ type: string; action?: string; content?: string; target?: string; topic?: string; prompt?: string }>(
+      `/chats/${chatId}/notes/${noteId}/ai`,
+      { method: 'POST', body: JSON.stringify({ action, context }) }
+    );
+  }
+
+  exportNotesMarkdown(chatId: string) {
+    const token = localStorage.getItem('auth_token');
+    return fetch(`/api/v1/chats/${chatId}/notes/export`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
+    });
   }
 
   // ── User Storage & Data ──
@@ -1013,8 +1032,6 @@ class ApiClient {
   }
 
   exportMyData() {
-    // Returns a fetch Response for streaming download — handled directly by component
-    // Note: Use fetch directly for streaming download instead of this.request
     const token = localStorage.getItem('auth_token');
     return fetch('/api/v1/users/me/export', {
       headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
@@ -1039,9 +1056,13 @@ export interface NoteItem {
   id: string;
   document_id: string | null;
   page_number: number | null;
-  selected_text: string;
+  title: string | null;
+  selected_text: string | null;
   user_note: string | null;
+  tag: string | null;
+  is_pinned: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 export interface AdminDocumentDetailData {

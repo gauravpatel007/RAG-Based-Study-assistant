@@ -27,7 +27,7 @@ export function PdfViewerPage() {
 
   if (!chatId || !documentId) return null;
 
-  const handleAction = async (prompt: string | null, action: 'send' | 'compose' | 'note' | 'quote') => {
+  const handleAction = async (prompt: string | null, action: 'send' | 'compose' | 'note' | 'quote', actionId?: string, rawText?: string) => {
     if (action === 'note' && prompt) {
       try {
         await api.createNote(chatId, {
@@ -44,6 +44,16 @@ export function PdfViewerPage() {
     }
     
     clearSelection();
+    
+    if (actionId === 'mcq') {
+      navigate(`/app/chats/${chatId}/quiz${rawText ? `?topic=${encodeURIComponent(rawText)}` : ''}`);
+      return;
+    }
+    if (actionId === 'flashcard') {
+      navigate(`/app/chats/${chatId}/flashcards${rawText ? `?topic=${encodeURIComponent(rawText)}` : ''}`);
+      return;
+    }
+
     if (prompt) {
       navigate(`/app/chats/${chatId}?q=${encodeURIComponent(prompt)}`);
     } else {

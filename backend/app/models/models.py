@@ -164,6 +164,7 @@ class Chat(Base):
     comparisons = relationship("Comparison", back_populates="chat", cascade="all, delete-orphan")
     notes = relationship("Note", back_populates="chat", cascade="all, delete-orphan")
     flashcard_sets = relationship("FlashcardSet", back_populates="chat", cascade="all, delete-orphan")
+    presentation_sets = relationship("PresentationSet", back_populates="chat", cascade="all, delete-orphan")
 
 
 # ──────────────────────────────────────────────
@@ -578,9 +579,13 @@ class Note(Base):
     chat_id       = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     document_id   = Column(UUID(as_uuid=True), nullable=True)   # which PDF
     page_number   = Column(Integer, nullable=True)
-    selected_text = Column(Text, nullable=False)                # the highlighted excerpt
+    title         = Column(String(200), nullable=True)          # title for standalone notes
+    selected_text = Column(Text, nullable=True, default="")     # the highlighted excerpt (empty for standalone)
     user_note     = Column(Text, nullable=True)                 # optional annotation the user types
+    tag           = Column(String(30), nullable=True)           # concept | formula | exam | doubt
+    is_pinned     = Column(Boolean, default=False, nullable=False)
     created_at    = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at    = Column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
     __table_args__ = (
         Index("ix_note_user_chat", "user_id", "chat_id"),
@@ -650,3 +655,36 @@ class RagQueryLog(Base):
         Index("ix_rag_query_created", "created_at"),
         Index("ix_rag_query_user", "user_id"),
     )
+
+
+# ──────────────────────────────────────────────
+#  Presentations (PPT Maker)
+# ──────────────────────────────────────────────
+class PresentationSet(Base):
+    __tablename__ = "presentation_sets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    chat_id = Column(UUID(as_uuid=True), ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    topic = Column(String(300), nullable=False)
+    slide_count = Column(Integer, nullable=False)
+    source_mix = Column(String(50), nullable=False) # '100_pdf', '100_llm', '50_50'
+    corpus_version = Column(Integer, nullable=False)
+    status = Column(String(30), nullable=False, default="pending")
+    covered_pages = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    chat = relationship("Chat", back_populates="presentation_sets")
+    slides = relationship("PresentationSlide", back_populates="presentation_set", cascade="all, delete-orphan")
+
+
+class PresentationSlide(Base):
+    __tablename__ = "presentation_slides"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=new_uuid)
+    presentation_set_id = Column(UUID(as_uuid=True), ForeignKey("presentation_sets.id", ondelete="CASCADE"), nullable=False)
+    rank = Column(Integer, nullable=False)
+    title = Column(String(300), nullable=False)
+    bullet_points = Column(JSONB, nullable=False) # List of strings
+    speaker_notes = Column(Text, nullable=True)
+
+    presentation_set = relationship("PresentationSet", back_populates="slides")

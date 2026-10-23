@@ -8,15 +8,19 @@ def prepare_concept_edges_batch(topics, context_tokens):
     topic_list = "\n".join(f"[{i}] {t.title}: {t.description}" for i, t in enumerate(topics))
     
     system = (
-        "You are an expert knowledge extractor building an ontology from a text. "
+        "You are an expert knowledge architect building a strict hierarchical Mind Map from a text. "
         "Analyze the provided list of extracted concepts/topics. "
-        "Determine meaningful, direct semantic relationships between them based solely on their provided descriptions "
-        "and logical structures. Do not invent relationships or use external knowledge.\n\n"
-        "Valid relationship types: PART_OF, HAS_COMPONENT, PREREQUISITE_OF, RELATED_TO, USED_BY, DEPENDS_ON.\n\n"
+        "Your task is to organize them into a STRICT, SINGLE-ROOTED TREE structure.\n\n"
+        "1. Identify the single most overarching/central topic from the list to be the ROOT.\n"
+        "2. Connect all other topics back to this root, either directly (Level 1 branches) or indirectly (sub-branches).\n"
+        "3. Every topic (except the root) MUST have EXACTLY ONE parent topic.\n"
+        "4. The tree should be balanced where possible (e.g., 4-10 main branches, each with subtopics).\n"
+        "Do not invent relationships, but arrange them logically based on their descriptions.\n\n"
         "Return a JSON object exactly matching this schema:\n"
-        '{"edges": [{"source": index, "target": index, "relationship": "TYPE", "evidence": "Brief 1-sentence quote or reason"}]}\n'
-        "source and target MUST be the integer indices of the concepts from the list. "
-        "Output ONLY valid JSON. No markdown formatting or extra text."
+        '{"edges": [{"source": parent_index, "target": child_index, "relationship": "hierarchy", "evidence": "Why this is a subtopic"}]}\n'
+        "source (parent) and target (child) MUST be the integer indices of the concepts from the list. "
+        "The output MUST represent a valid tree with NO CYCLES and exactly ONE ROOT. "
+        "Output ONLY valid JSON."
     )
     
     prompt = [
@@ -40,7 +44,7 @@ def prepare_concept_edges_batch(topics, context_tokens):
                         "target": {"type": "integer", "minimum": 0, "maximum": len(topics) - 1},
                         "relationship": {
                             "type": "string", 
-                            "enum": ["PART_OF", "HAS_COMPONENT", "PREREQUISITE_OF", "RELATED_TO", "USED_BY", "DEPENDS_ON"]
+                            "enum": ["hierarchy", "parent", "subtopic"]
                         },
                         "evidence": {"type": "string", "maxLength": 500}
                     }

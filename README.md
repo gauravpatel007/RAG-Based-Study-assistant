@@ -10,7 +10,7 @@ All AI features run locally, with no paid APIs required.
 - **Topic Extraction**: Summarize important concepts from large textbooks.
 
 ## Quick Start
-In Command Prompt (CMD):
+In Command Prompt (cmd) of the project Folder :
 ```cmd
 stop.bat
 start.bat

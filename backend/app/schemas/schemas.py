@@ -300,6 +300,16 @@ class CreateQuizSetResponse(BaseModel):
     quiz_set_id: UUID
     job_id: UUID
 
+class CreatePresentationSetRequest(BaseModel):
+    topic: str
+    slide_count: int = Field(default=10, ge=1, le=20)
+    source_mix: str = Field(default="50_50") # 100_pdf, 100_llm, 50_50
+    document_ids: Optional[list[UUID]] = None
+
+class CreatePresentationSetResponse(BaseModel):
+    presentation_set_id: UUID
+    job_id: UUID
+
 class AdminDashboardResponse(BaseModel):
     total_users: int
     total_documents: int
@@ -391,8 +401,18 @@ class DeleteAccountRequest(BaseModel):
 class CreateNoteRequest(BaseModel):
     document_id:   Optional[UUID] = None
     page_number:   Optional[int]  = None
-    selected_text: str = Field(..., min_length=1, max_length=2000)
-    user_note:     Optional[str] = Field(None, max_length=4000)
+    title:         Optional[str] = Field(None, max_length=200)
+    selected_text: Optional[str] = Field("", max_length=5000)
+    user_note:     Optional[str] = Field(None, max_length=10000)
+    tag:           Optional[str] = Field(None, pattern=r"^(concept|formula|exam|doubt)$")
 
 class UpdateNoteRequest(BaseModel):
-    user_note: Optional[str] = Field(None, max_length=4000)
+    title:         Optional[str] = Field(None, max_length=200)
+    user_note:     Optional[str] = Field(None, max_length=10000)
+    selected_text: Optional[str] = Field(None, max_length=5000)
+    tag:           Optional[str] = None
+    is_pinned:     Optional[bool] = None
+
+class NoteAiActionRequest(BaseModel):
+    action: str = Field(..., pattern=r"^(summarize|explain|flashcard|quiz|ask)$")
+    context: Optional[str] = Field(None, max_length=2000)

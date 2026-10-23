@@ -283,9 +283,19 @@ export default function AdminDashboard() {
               title="Click to view all users"
               style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-default)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', transition: 'transform 0.2s', cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ padding: '10px', background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', borderRadius: '12px', color: '#2563eb', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)' }}>
-                  <Users size={22} strokeWidth={2.5} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '16px',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  color: '#3b82f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Users size={24} />
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Users</div>
@@ -300,9 +310,19 @@ export default function AdminDashboard() {
               title="Click to view all documents"
               style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-default)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', transition: 'transform 0.2s', cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ padding: '10px', background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', borderRadius: '12px', color: '#059669', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)' }}>
-                  <FileText size={22} strokeWidth={2.5} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '16px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <FileText size={24} />
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Documents</div>
@@ -317,9 +337,19 @@ export default function AdminDashboard() {
               title="Click to view AI usage"
               style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-default)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', transition: 'transform 0.2s', cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ padding: '10px', background: 'linear-gradient(135deg, #f3e8ff, #e9d5ff)', borderRadius: '12px', color: '#7c3aed', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)' }}>
-                  <Brain size={22} strokeWidth={2.5} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '16px',
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  color: '#8b5cf6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Brain size={24} />
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>AI Queries</div>
@@ -334,9 +364,19 @@ export default function AdminDashboard() {
               title="Click to view Storage Administration"
               style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-default)', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)', transition: 'transform 0.2s', cursor: 'pointer' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ padding: '10px', background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', borderRadius: '12px', color: '#d97706', boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.5)' }}>
-                  <HardDrive size={22} strokeWidth={2.5} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '16px',
+                  background: 'rgba(249, 115, 22, 0.1)',
+                  color: '#f97316',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <HardDrive size={24} />
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Storage Used</div>

@@ -37,6 +37,7 @@ export default function FlashcardsPage() {
 
   // Generation state
   const [genCount, setGenCount] = useState(10);
+  const [topicInput, setTopicInput] = useState(topicFilter || '');
   const [generating, setGenerating] = useState(false);
   const [generatingJobId, setGeneratingJobId] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<Record<string, any> | null>(null);
@@ -131,7 +132,7 @@ export default function FlashcardsPage() {
     try {
       const selected = selectedDocs.length > 0 ? selectedDocs : documents.map(d => d.id);
       if (!selected.length) throw new Error("Upload and process at least one PDF document first.");
-      const res = await api.generateFlashcards(chatId, selected, genCount, topicFilter || undefined);
+      const res = await api.generateFlashcards(chatId, selected, genCount, topicInput.trim() || undefined);
       setGeneratingJobId(res.job_id);
       setToast(`Generation job started. Check back soon!`);
       setTimeout(() => setToast(''), 3000);
@@ -241,12 +242,6 @@ export default function FlashcardsPage() {
           </button>
         </div>
 
-        {topicFilter && (
-          <div className="alert-box info" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center' }}>
-            <span>Generating exclusively for topic: <strong>{topicFilter}</strong></span>
-          </div>
-        )}
-
         {jobProgress && (
           <div style={{ margin: '0 0 24px 0', padding: 16, background: 'var(--bg-panel)', borderRadius: 12, border: '1px solid var(--border)' }}>
             <h3 style={{ margin: '0 0 12px', fontSize: 14 }}>Generating Flashcards...</h3>
@@ -306,6 +301,20 @@ export default function FlashcardsPage() {
                 <label className="filter-group">
                   <span className="filter-label">Card count</span>
                   <input aria-label="Card count" className="form-input" type="number" min={1} max={50} value={genCount} onChange={e => setGenCount(Number(e.target.value))} />
+                </label>
+              </div>
+
+              <div style={{ marginTop: '16px' }}>
+                <label className="filter-group">
+                  <span className="filter-label">Topic / Keywords (Optional)</span>
+                  <input 
+                    aria-label="Topic or Keywords" 
+                    className="form-input" 
+                    type="text" 
+                    placeholder="e.g. Memory Management, Variables" 
+                    value={topicInput} 
+                    onChange={e => setTopicInput(e.target.value)} 
+                  />
                 </label>
               </div>
             </div>

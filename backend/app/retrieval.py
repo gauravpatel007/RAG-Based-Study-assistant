@@ -10,6 +10,7 @@ import asyncio
 import logging
 import time
 from uuid import UUID
+from collections import OrderedDict
 
 from sqlalchemy import select
 from app import providers
@@ -67,31 +68,53 @@ async def _semantic_search(
 # ──────────────────────────────────────────────────────────────────
 # 2. BM25 KEYWORD SEARCH  (rank-bm25)
 # ──────────────────────────────────────────────────────────────────
+_bm25_cache: OrderedDict[str, tuple[any, list]] = OrderedDict()  # chat_id -> (bm25_index, chunk_ids)
+_BM25_CACHE_MAX = 20  # keep 20 chats in cache
+
+async def _get_or_build_bm25(chat_id: str, chunks: list):
+    """Build BM25 index once per chat, cache it."""
+    from rank_bm25 import BM25Okapi
+    
+    cache_key = f"{chat_id}:{len(chunks)}"  # invalidate if chunk count changes
+    if cache_key in _bm25_cache:
+        return _bm25_cache[cache_key]
+    
+    def _build():
+        tokenized = [c.text.lower().split() for c in chunks]
+        return BM25Okapi(tokenized)
+    
+    bm25 = await asyncio.to_thread(_build)
+    
+    if len(_bm25_cache) >= _BM25_CACHE_MAX:
+        _bm25_cache.popitem(last=False)
+    
+    chunk_ids = [str(c.id) for c in chunks]
+    _bm25_cache[cache_key] = (bm25, chunk_ids)
+    return bm25, chunk_ids
+
 async def _bm25_search(
     query: str,
+    chat_id: str,
     chunks: list[DocumentChunk],
     top_k: int,
     _timing: dict | None = None,
 ) -> list[tuple[str, float]]:
     """
-    Builds an in-memory BM25 index from the given chunks and scores them.
+    Builds or retrieves an in-memory BM25 index from the given chunks and scores them.
     Returns list of (chunk_id_str, bm25_score) sorted descending (higher = better).
     """
     t0 = time.perf_counter()
-    from rank_bm25 import BM25Okapi
 
-    def _build_and_score():
-        # Simple whitespace tokenizer — good enough for technical text
-        tokenized_corpus = [c.text.lower().split() for c in chunks]
-        bm25 = BM25Okapi(tokenized_corpus)
+    bm25, chunk_ids = await _get_or_build_bm25(chat_id, chunks)
+
+    def _score():
         tokenized_query = query.lower().split()
-        scores = bm25.get_scores(tokenized_query)
-        return scores
-
-    scores = await asyncio.to_thread(_build_and_score)
+        return bm25.get_scores(tokenized_query)
+        
+    scores = await asyncio.to_thread(_score)
 
     # Pair chunk ids with scores, sort by score descending
-    paired = [(str(chunks[i].id), float(scores[i])) for i in range(len(chunks))]
+    paired = [(chunk_ids[i], float(scores[i])) for i in range(len(chunk_ids))]
     paired.sort(key=lambda x: x[1], reverse=True)
     
     if _timing is not None:
@@ -191,7 +214,7 @@ async def hybrid_retrieve(
         )).all()
 
     if not all_chunks_rows:
-        return []
+        return [], {}
 
     chunk_map: dict[str, DocumentChunk] = {str(c.id): c for c in all_chunks_rows}
 
@@ -200,7 +223,7 @@ async def hybrid_retrieve(
         _semantic_search(query, user_id, chat_id, document_ids, versions, semantic_top_k, _timing),
     ]
     if bm25_enabled and len(all_chunks_rows) <= settings.BM25_MAX_CHUNKS:
-        tasks.append(_bm25_search(query, list(all_chunks_rows), bm25_top_k, _timing))
+        tasks.append(_bm25_search(query, str(chat_id), list(all_chunks_rows), bm25_top_k, _timing))
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
     semantic_results = results[0] if not isinstance(results[0], Exception) else []
@@ -218,7 +241,7 @@ async def hybrid_retrieve(
     candidate_ids = [cid for cid, _ in merged if cid in chunk_map]
 
     if not candidate_ids:
-        return []
+        return [], {}
 
     # ── Stage 3: Cross-encoder reranking ──
     candidate_chunks = [chunk_map[cid] for cid in candidate_ids]

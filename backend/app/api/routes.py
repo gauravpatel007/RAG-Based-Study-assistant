@@ -34,8 +34,8 @@ from app.core.database import get_db, async_session_factory
 from app.core.sessions import create_session, get_current_user, revoke_session
 from app.core.settings import settings
 from app.topic_generation import PROMPT_VERSION
-from app.models.models import User, Chat, Message, Document, DocumentPage, DocumentChunk, MessageSource, Job, TopicSet, Topic, QuizSet, QuizQuestion, UserProfile, UserPreferences, FlashcardSet, Flashcard, FlashcardReview, ConceptEdge, utcnow, FailedLoginAttempt, AuditLog, Note, Session, AiUsageLog, VerificationCode
-from app.schemas.schemas import LoginRequest, RegisterRequest, ChatCreateRequest, ChatRenameRequest, SendMessageRequest, CreateTopicSetRequest, MessageFeedbackRequest, CreateQuizSetRequest, AdminUserCreateRequest, AdminUserUpdateRequest, AdminDocumentUpdateRequest, UserProfileUpdateRequest, UserPreferencesUpdateRequest, ChangePasswordRequest, AddDocumentToChatRequest, CreateNoteRequest, UpdateNoteRequest, DeleteAccountRequest, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
+from app.models.models import User, Chat, Message, Document, DocumentPage, DocumentChunk, MessageSource, Job, TopicSet, Topic, QuizSet, QuizQuestion, UserProfile, UserPreferences, FlashcardSet, Flashcard, FlashcardReview, ConceptEdge, utcnow, FailedLoginAttempt, AuditLog, Note, Session, AiUsageLog, VerificationCode, PresentationSet, PresentationSlide
+from app.schemas.schemas import LoginRequest, RegisterRequest, ChatCreateRequest, ChatRenameRequest, SendMessageRequest, CreateTopicSetRequest, MessageFeedbackRequest, CreateQuizSetRequest, AdminUserCreateRequest, AdminUserUpdateRequest, AdminDocumentUpdateRequest, UserProfileUpdateRequest, UserPreferencesUpdateRequest, ChangePasswordRequest, AddDocumentToChatRequest, CreateNoteRequest, UpdateNoteRequest, NoteAiActionRequest, DeleteAccountRequest, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest, CreatePresentationSetRequest
 from app.core.email import send_email
 from app.schemas.flashcards import FlashcardOut, FlashcardReviewOut, SubmitReviewRequest, GenerateFlashcardsRequest
 from app.core.audit import log_action
@@ -471,7 +471,7 @@ async def send(chat_id: UUID, body: SendMessageRequest, db: AsyncSession = Depen
     
     static_answer = get_static_response(body.content.strip())
     if static_answer:
-        answer = Message(chat_id=chat_id, role="assistant", content=static_answer, status="completed", sequence_no=seq + 2,
+        answer = Message(chat_id=chat_id, role="assistant", content=static_answer, status="complete", sequence_no=seq + 2,
                          corpus_version=chat.corpus_version, model_name="static")
         db.add(answer)
         chat.updated_at = datetime.now(timezone.utc)
@@ -1044,6 +1044,65 @@ async def quiz_set_detail(quiz_set_id: UUID, db: AsyncSession = Depends(get_db),
         fail(404, "NOT_FOUND", "Quiz not found.")
     await owned_chat(db, user, row.chat_id)
     return await quiz_json(db, row)
+
+
+# ──────────────────────────────────────────────
+#  Presentations (PPT Maker)
+# ──────────────────────────────────────────────
+
+@router.post("/chats/{chat_id}/presentations", status_code=202)
+async def create_presentation(chat_id: UUID, body: CreatePresentationSetRequest, db: AsyncSession = Depends(get_db), user=Depends(user_dep)):
+    chat = await owned_chat(db, user, chat_id, lock=True)
+    
+    # We always create the PresentationSet row
+    presentation_set = PresentationSet(
+        chat_id=chat_id, 
+        topic=body.topic, 
+        slide_count=body.slide_count, 
+        source_mix=body.source_mix, 
+        corpus_version=chat.corpus_version
+    )
+    db.add(presentation_set)
+    await db.flush()
+    
+    payload = {
+        "presentation_set_id": str(presentation_set.id), 
+        "corpus_version": chat.corpus_version,
+        "topic": body.topic,
+        "slide_count": body.slide_count,
+        "source_mix": body.source_mix,
+        "document_ids": [str(d) for d in body.document_ids] if body.document_ids else None
+    }
+    
+    job = await enqueue(db, user.id, chat_id, "generate_presentation", payload=payload)
+    return {"presentation_set_id": presentation_set.id, "job_id": job.id}
+
+
+async def presentation_json(db, item):
+    slides = (await db.scalars(select(PresentationSlide).where(PresentationSlide.presentation_set_id == item.id).order_by(PresentationSlide.rank))).all()
+    job = await db.scalar(select(Job).where(Job.chat_id == item.chat_id, Job.payload["presentation_set_id"].as_string() == str(item.id)))
+    return {**fields(item, "id", "topic", "slide_count", "source_mix", "status", "created_at"), "job_id": job.id if job else None,
+        "status": (job.status if job and job.status in TERMINAL and item.status != "stale" else item.status),
+        "job_status": job.status if job else None, "progress": job.progress if job else None,
+        "error_code": job.error_code if job else None,
+        "completed_at": job.updated_at if job and job.status in ("complete", "failed", "cancelled") else None,
+        "slides": [fields(s, "id", "rank", "title", "bullet_points", "speaker_notes") for s in slides]}
+
+
+@router.get("/chats/{chat_id}/presentations")
+async def get_presentations(chat_id: UUID, db: AsyncSession = Depends(get_db), user=Depends(user_dep)):
+    await owned_chat(db, user, chat_id)
+    rows = (await db.scalars(select(PresentationSet).where(PresentationSet.chat_id == chat_id).order_by(PresentationSet.created_at.desc()).limit(50))).all()
+    return {"items": [await presentation_json(db, row) for row in rows]}
+
+
+@router.get("/presentations/{presentation_set_id}")
+async def presentation_set_detail(presentation_set_id: UUID, db: AsyncSession = Depends(get_db), user=Depends(user_dep)):
+    row = await db.get(PresentationSet, presentation_set_id)
+    if not row:
+        fail(404, "NOT_FOUND", "Presentation not found.")
+    await owned_chat(db, user, row.chat_id)
+    return await presentation_json(db, row)
 
 
 @router.get("/dashboard")
@@ -3116,7 +3175,7 @@ async def export_user_data(db: AsyncSession = Depends(get_db), user=Depends(user
         zf.writestr("profile.json", _json.dumps({
             "username": user.username,
             "display_name": profile.display_name if profile else None,
-            "email": profile.email if profile else None,
+            "email": user.email,
             "member_since": user.created_at.isoformat(),
         }, indent=2))
         zf.writestr("chats.json", _json.dumps(all_messages, indent=2))
@@ -3181,7 +3240,7 @@ async def rebuild_vector_index(db: AsyncSession = Depends(get_db), user=Depends(
         select(Document).where(Document.user_id == user.id, Document.deleted_at.is_(None))
     )).all()
     for doc in docs:
-        doc.status = "processing"
+        doc.status = "queued"
         new_version = uuid4()
         doc.active_index_version = new_version
         await enqueue(db, user.id, doc.chat_id, "ingest_document",
@@ -3199,8 +3258,10 @@ async def create_note(chat_id: UUID, body: CreateNoteRequest,
     note = Note(user_id=user.id, chat_id=chat_id,
                 document_id=body.document_id,
                 page_number=body.page_number,
-                selected_text=body.selected_text[:2000],
-                user_note=body.user_note)
+                title=body.title,
+                selected_text=(body.selected_text or "")[:5000],
+                user_note=body.user_note,
+                tag=body.tag)
     db.add(note)
     await db.commit()
     return {"id": note.id, "created_at": note.created_at}
@@ -3211,13 +3272,17 @@ async def list_notes(chat_id: UUID, db=Depends(get_db), user=Depends(user_dep)):
     await owned_chat(db, user, chat_id)
     rows = (await db.scalars(
         select(Note).where(Note.user_id == user.id, Note.chat_id == chat_id)
-        .order_by(Note.created_at.desc())
+        .order_by(Note.is_pinned.desc(), Note.created_at.desc())
     )).all()
     return {"items": [{"id": n.id, "document_id": n.document_id,
                        "page_number": n.page_number,
+                       "title": n.title,
                        "selected_text": n.selected_text,
                        "user_note": n.user_note,
-                       "created_at": n.created_at} for n in rows]}
+                       "tag": n.tag,
+                       "is_pinned": n.is_pinned,
+                       "created_at": n.created_at,
+                       "updated_at": n.updated_at} for n in rows]}
 
 
 @router.patch("/chats/{chat_id}/notes/{note_id}")
@@ -3226,7 +3291,16 @@ async def update_note(chat_id: UUID, note_id: UUID, body: UpdateNoteRequest,
     note = await db.scalar(select(Note).where(Note.id == note_id, Note.user_id == user.id))
     if not note:
         fail(404, "NOT_FOUND", "Note not found.")
-    note.user_note = body.user_note
+    if body.user_note is not None:
+        note.user_note = body.user_note
+    if body.title is not None:
+        note.title = body.title
+    if body.selected_text is not None:
+        note.selected_text = body.selected_text
+    if body.tag is not None:
+        note.tag = body.tag if body.tag else None
+    if body.is_pinned is not None:
+        note.is_pinned = body.is_pinned
     await db.commit()
     return {"status": "ok"}
 
@@ -3239,3 +3313,95 @@ async def delete_note(chat_id: UUID, note_id: UUID, db=Depends(get_db), user=Dep
     await db.delete(note)
     await db.commit()
     return {"status": "ok"}
+
+
+@router.post("/chats/{chat_id}/notes/{note_id}/ai")
+async def note_ai_action(chat_id: UUID, note_id: UUID, body: NoteAiActionRequest,
+                         db=Depends(get_db), user=Depends(user_dep)):
+    """Run a quick AI action on a note — summarize, explain, convert to flashcard, quiz, or ask."""
+    note = await db.scalar(select(Note).where(Note.id == note_id, Note.user_id == user.id))
+    if not note:
+        fail(404, "NOT_FOUND", "Note not found.")
+
+    text = (note.selected_text or "") + ("\n\n" + note.user_note if note.user_note else "")
+    text = text.strip()
+    if not text:
+        fail(400, "EMPTY_NOTE", "Note has no content to process.")
+
+    action = body.action
+
+    # For flashcard and quiz, redirect to existing tabs with content
+    if action == "flashcard":
+        return {"type": "redirect", "target": "flashcards", "topic": text[:300]}
+    if action == "quiz":
+        return {"type": "redirect", "target": "quiz", "topic": text[:300]}
+    if action == "ask":
+        return {"type": "redirect", "target": "chat", "prompt": f"Regarding this passage:\n\n> {text[:500]}\n\n{body.context or 'Please explain this further.'}"}
+
+    # For summarize/explain, call the LLM inline
+    from app import providers
+    if action == "summarize":
+        prompt = [
+            {"role": "system", "content": "You are a study assistant. Summarize the following into exactly 3 concise bullet points. Return only the bullet points, no intro."},
+            {"role": "user", "content": text[:3000]}
+        ]
+    else:  # explain
+        prompt = [
+            {"role": "system", "content": "You are a patient tutor. Explain the following passage in simple, plain language that a beginner can understand. Use analogies where helpful. Keep it under 150 words."},
+            {"role": "user", "content": text[:3000]}
+        ]
+
+    content = ""
+    metrics = providers.UsageMetrics()
+    try:
+        import asyncio as _asyncio
+        async with _asyncio.timeout(120):
+            async for part in providers.generate(prompt, max_tokens=500, metrics=metrics):
+                content += part
+    except Exception as exc:
+        fail(500, "AI_ERROR", f"AI generation failed: {exc}")
+
+    return {"type": "result", "action": action, "content": content.strip()}
+
+
+@router.get("/chats/{chat_id}/notes/export")
+async def export_notes_markdown(chat_id: UUID, db=Depends(get_db), user=Depends(user_dep)):
+    """Export all notes as a Markdown study guide."""
+    await owned_chat(db, user, chat_id)
+    chat = await db.get(Chat, chat_id)
+    rows = (await db.scalars(
+        select(Note).where(Note.user_id == user.id, Note.chat_id == chat_id)
+        .order_by(Note.is_pinned.desc(), Note.created_at.desc())
+    )).all()
+    docs = (await db.scalars(
+        select(Document).where(Document.chat_id == chat_id, Document.user_id == user.id, Document.deleted_at.is_(None))
+    )).all()
+    doc_map = {d.id: d.original_filename for d in docs}
+
+    lines = [f"# Study Notes — {chat.title or 'Untitled'}\n"]
+    lines.append(f"*Exported on {utcnow().strftime('%Y-%m-%d %H:%M UTC')}*\n")
+    lines.append(f"**Total notes:** {len(rows)}\n\n---\n")
+
+    tag_labels = {"concept": "🟣 Core Concept", "formula": "🔵 Formula / Definition",
+                  "exam": "🟢 Exam High-Yield", "doubt": "🟡 Doubt / Question"}
+
+    for n in rows:
+        pin = "📌 " if n.is_pinned else ""
+        tag = f" `{tag_labels.get(n.tag, n.tag)}`" if n.tag else ""
+        title = n.title or "Untitled Note"
+        lines.append(f"## {pin}{title}{tag}\n")
+        if n.document_id and n.document_id in doc_map:
+            lines.append(f"*Source: {doc_map[n.document_id]}" + (f" — p.{n.page_number}" if n.page_number else "") + "*\n")
+        if n.selected_text:
+            lines.append(f"\n> {n.selected_text}\n")
+        if n.user_note:
+            lines.append(f"\n{n.user_note}\n")
+        lines.append("\n---\n")
+
+    from fastapi.responses import Response
+    md = "\n".join(lines)
+    return Response(
+        content=md,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="notes_{chat_id}.md"'}
+    )

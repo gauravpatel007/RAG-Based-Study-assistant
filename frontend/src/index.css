@@ -798,6 +798,70 @@ ol {
   transform: translateY(-1px);
 }
 
+/* Recharts & SVG Focus Outline Reset (Prevent black focus border box on click) */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-responsive-container,
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-responsive-container:focus,
+.recharts-responsive-container:focus-visible,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible,
+.recharts-surface *:focus,
+.recharts-surface *:focus-visible,
+.recharts-responsive-container *:focus,
+.recharts-responsive-container *:focus-visible,
+svg.recharts-surface,
+svg.recharts-surface:focus,
+svg.recharts-surface:focus-visible,
+svg:focus,
+svg:focus-visible,
+path:focus,
+path:focus-visible,
+rect:focus,
+rect:focus-visible,
+g:focus,
+g:focus-visible,
+.recharts-sector,
+.recharts-sector:focus,
+.recharts-sector:focus-visible,
+.recharts-pie-sector,
+.recharts-pie-sector:focus,
+.recharts-pie-sector:focus-visible,
+.recharts-bar-rectangle,
+.recharts-bar-rectangle:focus,
+.recharts-bar-rectangle:focus-visible,
+.recharts-bar-rectangles,
+.recharts-bar-rectangles:focus,
+.recharts-bar-rectangles:focus-visible,
+.recharts-area-area,
+.recharts-area-area:focus,
+.recharts-area-area:focus-visible,
+.recharts-layer,
+.recharts-layer:focus,
+.recharts-layer:focus-visible,
+.metric-card:focus,
+.metric-card:focus-visible,
+.metric-card:focus-within {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+  outline-color: transparent !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  box-shadow: none !important;
+}
+
 .metric-label {
   font-size: 12.5px;
   color: var(--text-muted);

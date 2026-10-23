@@ -21,6 +21,7 @@ export default function QuizPage() {
   const [difficulty, setDifficulty] = useState('medium');
   const [start, setStart] = useState('');
   const [finish, setFinish] = useState('');
+  const [topicInput, setTopicInput] = useState(topicFilter || '');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -72,7 +73,7 @@ export default function QuizPage() {
       if (!documents.length) throw new Error('Upload a PDF and wait until it is ready first.');
       if ((start || finish) && (!start || !finish || Number(start) > Number(finish))) throw new Error('Enter a valid start and end page.');
       const result = await api.createQuizSet(chatId!, selected.length ? selected : documents.map(d => d.id), count, difficulty,
-        start && finish ? { start: Number(start), end: Number(finish) } : undefined, topicFilter || undefined);
+        start && finish ? { start: Number(start), end: Number(finish) } : undefined, topicInput.trim() || undefined);
       setActiveSetId(result.quiz_set_id);
       setSets((await api.getChatQuizSets(chatId)).items);
     } catch (e) { setError((e as Error).message || 'Quiz generation failed.'); }
@@ -172,12 +173,19 @@ export default function QuizPage() {
               </label>
             </div>
             
-            {topicFilter && (
-              <div className="alert-box info" style={{ marginTop: '16px', display: 'flex', alignItems: 'center' }}>
-                <Check size={16} style={{ marginRight: 8 }} />
-                <span>Generating questions exclusively for topic: <strong>{topicFilter}</strong></span>
-              </div>
-            )}
+            <div style={{ marginTop: '16px' }}>
+              <label className="filter-group">
+                <span className="filter-label">Topic / Keywords (Optional)</span>
+                <input 
+                  aria-label="Topic or Keywords" 
+                  className="form-input" 
+                  type="text" 
+                  placeholder="e.g. Artificial Intelligence, Backpropagation" 
+                  value={topicInput} 
+                  onChange={e => setTopicInput(e.target.value)} 
+                />
+              </label>
+            </div>
           </div>
         </div>
 

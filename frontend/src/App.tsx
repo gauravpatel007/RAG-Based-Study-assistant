@@ -15,6 +15,7 @@ import FlashcardsPage from '@/pages/FlashcardsPage';
 import MindMapsPage from '@/pages/MindMapsPage';
 import { PdfViewerPage } from '@/pages/PdfViewerPage';
 import { NotesPage } from '@/pages/NotesPage';
+import PresentationsPage from '@/pages/PresentationsPage';
 import AdminDashboard from '@/pages/AdminDashboard';
 import AdminUsers from '@/pages/AdminUsers';
 import AdminDocuments from '@/pages/AdminDocuments';
@@ -56,6 +57,7 @@ function AppWithTheme() {
                 <Route path="compare" element={<ComparePage />} />
                 <Route path="flashcards" element={<FlashcardsPage />} />
                 <Route path="notes" element={<NotesPage />} />
+                <Route path="presentations" element={<PresentationsPage />} />
               </Route>
               <Route path="/app/chats/:chatId/pdf/:documentId" element={<PdfViewerPage />} />
               <Route path="/app/documents" element={<DocumentsPage />} />

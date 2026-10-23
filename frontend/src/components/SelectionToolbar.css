@@ -2,19 +2,40 @@
   position: fixed;
   z-index: 10000;
   pointer-events: auto;
-  animation: toolbar-pop 120ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: top 0.15s ease-out, left 0.15s ease-out, opacity 0.15s ease;
 }
 
 .selection-toolbar-inner {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(12px);
   border-radius: 40px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
   padding: 4px;
+  gap: 6px;
+  border: 1px solid var(--border-default, rgba(0, 0, 0, 0.08));
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.selection-toolbar-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
   gap: 2px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-default, rgba(0, 0, 0, 0.1));
+  margin: 0 2px;
+  flex-shrink: 0;
 }
 
 .selection-toolbar-btn {
@@ -22,16 +43,17 @@
   align-items: center;
   gap: 6px;
   height: 32px;
-  padding: 0 12px;
+  padding: 0 10px;
   border: none;
   background: transparent;
   border-radius: 32px;
   cursor: pointer;
-  color: #333;
+  color: var(--text-primary, #333);
   font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .selection-toolbar-btn:hover {
@@ -41,18 +63,35 @@
 
 .selection-toolbar-arrow {
   position: absolute;
-  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.95);
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  transition: left 0.15s ease-out;
+}
+
+.selection-toolbar.placement-top .selection-toolbar-arrow {
+  bottom: -7px;
+  border-top: 8px solid var(--bg-surface, rgba(255, 255, 255, 0.95));
+  border-bottom: none;
+}
+
+.selection-toolbar.placement-bottom .selection-toolbar-arrow {
+  top: -7px;
+  border-bottom: 8px solid var(--bg-surface, rgba(255, 255, 255, 0.95));
+  border-top: none;
+  filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.1));
 }
 
 @keyframes toolbar-pop {
-  0% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(10px); }
-  100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  0% { opacity: 0; transform: scale(0.95) translateY(5px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Add a global animation for when opacity is 1 */
+.selection-toolbar[style*="opacity: 1"] {
+  animation: toolbar-pop 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }

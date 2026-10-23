@@ -33,7 +33,7 @@ interface AiUsageData {
   by_type: { type: string; count: number; percentage: number }[];
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+const COLORS = ['#10B981', '#8B5CF6', '#3B82F6', '#EC4899', '#06B6D4', '#F59E0B', '#F97316', '#64748B'];
 
 const formatNumber = (num: number) => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -66,6 +66,7 @@ export default function AdminAiUsage() {
   const [range, setRange] = useState('30d');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [hoveredBreakdown, setHoveredBreakdown] = useState(false);
 
   useEffect(() => {
     fetchUsage();
@@ -357,118 +358,162 @@ export default function AdminAiUsage() {
         </div>
 
         {/* Query Type Breakdown */}
-        <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Query Type Breakdown</h3>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '500' }}>
-              {(data?.by_type?.reduce((acc, t) => acc + t.count, 0) || 0).toLocaleString()} queries
-            </span>
-          </div>
+        {(() => {
+          const sortedByType = [...(data?.by_type || [])].sort((a, b) => b.count - a.count);
+          const totalQueries = sortedByType.reduce((acc, t) => acc + t.count, 0);
 
-          {data?.by_type.length ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, justifyContent: 'center' }}>
-
-              {/* Donut Chart with Centered Total Metric */}
-              <div style={{ position: 'relative', width: '100%', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.by_type}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={80}
-                      paddingAngle={4}
-                      dataKey="count"
-                      nameKey="type"
-                    >
-                      {data.by_type.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip
-                      contentStyle={{ background: 'var(--bg-card)', borderColor: 'var(--border-default)', borderRadius: '8px', color: 'var(--text-primary)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      itemStyle={{ color: 'var(--text-primary)' }}
-                      formatter={(value: any, name: any) => [
-                        `${value.toLocaleString()} queries (${data.by_type.find(t => t.type === name)?.percentage || 0}%)`,
-                        formatQueryType(name)
-                      ]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total</span>
-                  <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.1 }}>
-                    {formatNumber(data.by_type.reduce((acc, t) => acc + t.count, 0))}
-                  </span>
-                </div>
+          return (
+            <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600' }}>Query Type Breakdown</h3>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: '500' }}>
+                  {totalQueries.toLocaleString()} queries
+                </span>
               </div>
 
-              {/* Clean Breakdown List */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                {data.by_type.map((entry, index) => {
-                  const displayType = formatQueryType(entry.type);
-                  const color = COLORS[index % COLORS.length];
-                  return (
-                    <div
-                      key={entry.type}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '6px 10px',
-                        borderRadius: '8px',
-                        background: 'var(--bg-active)',
-                        transition: 'background 0.15s ease'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                        <span style={{ color: 'var(--text-primary)', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {displayType}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500 }}>
-                          {entry.count.toLocaleString()}
-                        </span>
-                        <span style={{
-                          color: color,
-                          fontWeight: 600,
-                          background: `${color}18`,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          minWidth: '40px',
-                          textAlign: 'center'
-                        }}>
-                          {entry.percentage}%
-                        </span>
-                      </div>
+              {sortedByType.length ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, justifyContent: 'center' }}>
+
+                  {/* Donut Chart with Centered Total Metric */}
+                  <div
+                    onMouseLeave={() => setHoveredBreakdown(false)}
+                    style={{ position: 'relative', width: '100%', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart onMouseLeave={() => setHoveredBreakdown(false)}>
+                        <Pie
+                          data={sortedByType}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={55}
+                          outerRadius={80}
+                          paddingAngle={4}
+                          dataKey="count"
+                          nameKey="type"
+                          stroke="var(--bg-card)"
+                          strokeWidth={2}
+                          onMouseEnter={() => setHoveredBreakdown(true)}
+                          onMouseLeave={() => setHoveredBreakdown(false)}
+                        >
+                          {sortedByType.map((_, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          wrapperStyle={{ zIndex: 1000, pointerEvents: 'none' }}
+                          contentStyle={{
+                            background: 'var(--bg-card, #ffffff)',
+                            borderColor: 'var(--border-default, #e5e5e5)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                          }}
+                          itemStyle={{ color: 'var(--text-primary)' }}
+                          formatter={(value: any, name: any) => [
+                            `${Number(value).toLocaleString()} queries (${sortedByType.find(t => t.type === name)?.percentage || 0}%)`,
+                            formatQueryType(name)
+                          ]}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: hoveredBreakdown ? 0 : 1,
+                      transition: 'opacity 0.2s ease',
+                      zIndex: 1
+                    }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total</span>
+                      <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                        {formatNumber(totalQueries)}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
 
+                  {/* Clean Breakdown List (Highest to Lowest) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                    <style>{`
+                      .query-breakdown-row {
+                        transition: background 0.15s ease;
+                      }
+                      .query-breakdown-row:hover {
+                        background: var(--bg-hover, #ebecef) !important;
+                      }
+                    `}</style>
+                    {sortedByType.map((entry, index) => {
+                      const displayType = formatQueryType(entry.type);
+                      const color = COLORS[index % COLORS.length];
+                      return (
+                        <div
+                          key={entry.type}
+                          className="query-breakdown-row"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 12px',
+                            borderRadius: '10px',
+                            background: 'var(--bg-active, #f4f5f7)',
+                            transition: 'background 0.15s ease',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                            <span style={{
+                              color: 'var(--text-primary)',
+                              fontSize: '13.5px',
+                              fontWeight: 500,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              {displayType}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: 500 }}>
+                              {entry.count.toLocaleString()}
+                            </span>
+                            <span style={{
+                              color: color,
+                              fontWeight: 600,
+                              background: `${color}18`,
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              minWidth: '40px',
+                              textAlign: 'center'
+                            }}>
+                              {entry.percentage}%
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                </div>
+              ) : (
+                <div style={{ height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                  No breakdown data.
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-              No breakdown data.
-            </div>
-          )}
-        </div>
+          );
+        })()}
 
       </div>
 
